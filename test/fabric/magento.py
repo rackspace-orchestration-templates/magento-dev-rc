@@ -23,24 +23,23 @@ def check():
     assert port.is_listening(80), 'Web port 80 is not listening'
 
     # redis is listening
+    assert port.is_listening(6379), 'Redis port 6379 is not listening'
+    assert port.is_listening(6380), 'Redis port 6380 is not listening'
     assert port.is_listening(6381), 'Redis port 6381 is not listening'
 
     # nginx user is created
     assert user.exists("nginx"), 'nginx user does not exist'
     
-    # domain ftp user is created
-    assert user.exists("magento_sftp"), 'magento_sftp user does not exist'
-
-    # processes are running
-    assert process.is_up("nginx"), 'nginx is not running'
-    assert process.is_up("php-fpm"), 'php-fpm is not running'
-    assert process.is_up("redis"), 'redis is not running'
-    
-    # services are enabled
-    assert service.is_enabled("nginx"), 'nginx service not enabled'
-    assert service.is_enabled("redis"), 'redis service not enabled'
-    assert service.is_enabled("php-fpm"), 'php-fpm not enabled'
-    assert service.is_enabled("mysql"), 'database service not enabled'
+    if (env.platform_family == "rhel"):
+        assert process.is_up('nginx'), 'nginx is not running'
+        assert process.is_up('php-fpm'), 'php-fpm is not running'
+        assert service.is_enabled('nginx'), 'nginx is not enabled'
+        assert service.is_enabled('php-fpm'), 'php-fpm is not enabled'
+    elif (env.platform_family == 'debian'):
+        assert process.is_up('nginx'), 'nginx is not running'
+        assert process.is_up('php5-fpm'), 'php-fpm is not running'
+        assert service.is_enabled('nginx'), 'nginx is not enabled'
+        assert service.is_enabled('php5-fpm'), 'php-fpm is not enabled'
 
     # magento main page is available
     assert magento_is_responding(), 'Magento did not respond as expected.'

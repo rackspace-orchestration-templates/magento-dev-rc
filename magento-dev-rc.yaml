@@ -10,6 +10,9 @@ description: |
 
   This deployment is intended for development and test cases only. It is not
   designed for hosting "live" sites and is not scalable.
+
+  **This deployment is meant for development and testing scenarios only and is not
+  intended for production use**.
 parameter_groups:
 - label: Magento Settings
   parameters:
@@ -24,7 +27,6 @@ parameter_groups:
   - rc_network_name
 - label: rax-dev-params
   parameters:
-  - server_image
   - ansible_source
 
 parameters:
@@ -37,6 +39,7 @@ parameters:
     constraints:
     - allowed_pattern: "^[a-zA-Z0-9.-]{1,255}.[a-zA-Z]{2,15}$"
       description: Must be a valid domain name
+    immutable: true
   magento_user:
     type: string
     default: admin
@@ -45,21 +48,25 @@ parameters:
     constraints:
     - allowed_pattern: "^[a-zA-Z0-9]*$"
       description: Only can contain A-Z and 0-9
+    immutable: true
   magento_fname:
     type: string
     default: Joe
     label: Magento Admin First Name
     description: First name for Magento admin
+    immutable: true
   magento_lname:
     type: string
     default: User
     label: Magento Admin Last Name
     description: Last name for Magento admin
+    immutable: true
   magento_email:
     type: string
     default: admin@example.com
     label: Magento Admin E-Mail
     description: E-Mail for Magento admin
+    immutable: true
   magento_eula:
     type: boolean
     label: Agree to Terms?
@@ -70,17 +77,28 @@ parameters:
       description: |
         You must agree to the Magento Community Edition License
         which can be found here: http://opensource.org/licenses/osl-3.0.php
-  magento_samples:
-    type: boolean
-    default: False
-    label: Include Sample Data?
-    description: Include Magento Sample Data
+    immutable: true
+  #Advanced Options
+  magento_install:
+    type: string
+    default: "Fresh install of the latest Magento CE 1.9.x release"
+    label: How should Magento be deployed?
+    description: |
+      This option determines whether or not to install Magento and/or the sample
+      data, or if you will need to upload your own Magento code.
+    constraints:
+    - allowed_values:
+      - "Fresh install of the latest Magento CE 1.9.x release"
+      - "Fresh install of the latest Magento CE 1.9.x release (including sample data)"
+      - "Don't install Magento. I will upload an existing Magento site (see instructions)"
+    immutable: true
   rc_network_name:
     type: string
     label: RackConnect Network
     description: Name or UUID of RackConnected network to attach this server to
     constraints:
     - custom_constraint: rackconnect.network
+    immutable: true
   #Advanced Options
   server_flavor:
     type: string
@@ -91,14 +109,17 @@ parameters:
     - allowed_values:
       - 4 GB General Purpose v1
       - 8 GB General Purpose v1
+    immutable: true
   server_image:
     type: string
-    default: f4bbbce2-50b0-4b07-bf09-96c175a45f4b
+    default: Ubuntu 14.04 LTS (Trusty Tahr) (PVHVM) (Orchestration)
     label: Server Image
     description: Image to be used for all servers in this stack
     constraints:
     - allowed_values:
-      - f4bbbce2-50b0-4b07-bf09-96c175a45f4b
+      - Ubuntu 14.04 LTS (Trusty Tahr) (PVHVM) (Orchestration)
+      - CentOS 7 (PVHVM) (Orchestration)
+    immutable: true
   ansible_source:
     type: string
     default: http://catalog.rs-heat.com/ansible-roles/ansible-roles.tar.gz
@@ -190,9 +211,7 @@ resources:
         mysql_host_ip: "localhost"
         magento_sftp_user: "magento"
         magento_sftp_password: { get_attr: [magento_pass, value] }
-        magento_version: 1.9.1.0
-        magento_sample_content_version: 1.9.1.0
-        magento_sample_content: { get_param: magento_samples }
+        magento_reach_dropdown: { get_param: magento_install }
         magento_vhost_domain: { get_param: magento_url }
         magento_admin_user: { get_param: magento_user }
         magento_admin_pass: { get_attr: [magento_pass, value] }
@@ -261,7 +280,8 @@ resources:
     type: Rackspace::Cloud::BackupConfig
     depends_on: magento_server
     properties:
-      host_ip_address: { get_attr: [magento_server, networks, private, 0] }
+      #host_ip_address: { get_attr: [magento_server, accessIPv4] }
+      server: { get_resource: magento_server }
       BackupConfigurationName:
         str_replace:
           template: stack Weekly Backup

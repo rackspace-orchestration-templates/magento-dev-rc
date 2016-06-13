@@ -193,6 +193,7 @@ resources:
       input_values:
         tz: "America/Chicago"
         nginx_vhost_str: { get_param: magento_url }
+        nginx_vhost_template: "magento"
         mysql_root_password: { get_attr: [root_pass, value] }
         mysql_default_user: "magento"
         mysql_default_user_password: { get_attr: [ database_pass, value ] }

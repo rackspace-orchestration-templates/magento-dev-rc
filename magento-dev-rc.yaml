@@ -206,6 +206,23 @@ resources:
         - { name: 'fpc', port: '6381', persistent: 'FALSE', maxmemory: '1gb' }
         - { name: 'obj', port: '6379', persistent: 'FALSE', maxmemory: '1gb' }
         - { name: 'ses', port: '6380', persistent: 'TRUE', maxmemory: '1gb' }
+        phpfpm_vhosts:
+        - name: '{ get_param: magento_url }'
+          aliases: ['www.{ get_param: magento_url }']
+          http_port: '80'
+          ssl_port: '443'
+          template: 'magento'
+          phpmyadmin: 'False'
+          phpfpm_user: '{{ magento_sftp_user }}'
+          phpfpm_user_id: '{{ magento_sftp_user_id }}'
+        - name: '{ get_param: magento_url }-admin'
+          aliases: ['www.{ get_param: magento_url }']
+          http_port: '81'
+          ssl_port: '444'
+          template: 'magento'
+          phpmyadmin: 'False'
+          phpfpm_user: 'magento'
+          phpfpm_user_id: '{{ magento_sftp_user_id }}'
         magento_db_user: "magento"
         magento_db_password: { get_attr: [database_pass, value] }
         magento_db_name: "magento"
